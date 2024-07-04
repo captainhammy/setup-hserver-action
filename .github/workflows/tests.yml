@@ -1,0 +1,36 @@
+# Execute repository tests.
+name: Tests
+
+on:
+  - push
+  - workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        houdini-version:
+          - "19.5"  # Python 3.9
+          - "20.0"  # Python 3.10
+
+    container:
+      image: captainhammy/hython-runner:${{ matrix.houdini-version }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup hserver
+        uses: ./
+        continue-on-error: true
+        with:
+          server: ${{ secrets.LICENSE_SERVER }}
+          client_id: ${{ secrets.SESI_CLIENT_ID }}
+          client_secret_key: ${{ secrets.SESI_CLIENT_SECRET }}
+
+      # Grep for the license server url in the 'hserver -l' output to ensure it's pointed correctly.
+      - name: Test hserver is correctly pointed
+        run: hserver -l | grep ${{ secrets.LICENSE_SERVER }}
+        shell: bash
