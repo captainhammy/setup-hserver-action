@@ -10,12 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      max-parallel: 1
       matrix:
         houdini-version:
-          - "19.5"  # Python 3.9
-          - "20.0"  # Python 3.10
-          - "20.5"  # Python 3.11
+          - "19.5"
+          - "20.0"
+          - "20.5"
 
     container:
       image: captainhammy/hython-runner:${{ matrix.houdini-version }}
@@ -24,6 +23,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Test normal, working credentials.
       - name: Setup hserver
         uses: ./
         with:
@@ -40,7 +40,8 @@ jobs:
         run: hserver -q
         shell: bash
 
-      - name: Test when the credentials are bad and the validation should fail.
+      # Allow this step to continue on after the validation fails.
+      - name: Test bad credentials with validation.
         id: catch-failure
         uses: ./
         continue-on-error: true
@@ -49,8 +50,11 @@ jobs:
           client_id: foo
           client_secret_key: bar
 
-      - name: Validate previous failure
-        if: steps.catch-failure.outcome == 'success'
+      - name: output status
+        run: echo ${{ steps.catch-failure.outcome }}  ${{ steps.catch-failure.conclusion }}
+
+      - name: Validate previous step failure
+        if: steps.catch-failure.outcome != 'failure'
         run: exit 1
 
       - name: Stop running hserver
