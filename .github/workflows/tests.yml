@@ -37,7 +37,7 @@ jobs:
         shell: bash
 
       - name: Test when the credentials are bad and the validation should fail.
-        id: catch-failure
+#        id: catch-failure
         uses: ./
         continue-on-error: true
         with:
