@@ -12,8 +12,9 @@ jobs:
     strategy:
       matrix:
         houdini-version:
-          - "19.5"  # Python 3.9
-          - "20.0"  # Python 3.10
+          - "19.5"
+          - "20.0"
+          - "20.5"
 
     container:
       image: captainhammy/hython-runner:${{ matrix.houdini-version }}
@@ -22,9 +23,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Test normal, working credentials.
       - name: Setup hserver
         uses: ./
-        continue-on-error: true
         with:
           server: ${{ secrets.LICENSE_SERVER }}
           client_id: ${{ secrets.SESI_CLIENT_ID }}
@@ -34,3 +35,35 @@ jobs:
       - name: Test hserver is correctly pointed
         run: hserver -l | grep ${{ secrets.LICENSE_SERVER }}
         shell: bash
+
+      - name: Stop running hserver
+        run: hserver -q
+        shell: bash
+
+      # Allow this step to continue on after the validation fails.
+      - name: Test bad credentials with validation.
+        id: bad-credentials-with-failure
+        uses: ./
+        continue-on-error: true
+        with:
+          server: ${{ secrets.LICENSE_SERVER }}
+          client_id: foo
+          client_secret_key: bar
+
+      # If the previous step didn't fail before "continue-on-error" then this test should fail as
+      # the failure should have happened.
+      - name: Validate previous step failure
+        if: steps.bad-credentials-with-failure.outcome != 'failure'
+        run: exit 1
+
+      - name: Stop running hserver
+        run: hserver -q
+        shell: bash
+
+      - name: Test when the credentials are bad and validation is disabled.
+        uses: ./
+        with:
+          server: ${{ secrets.LICENSE_SERVER }}
+          client_id: foo
+          client_secret_key: bar
+          skip_validation: 1
