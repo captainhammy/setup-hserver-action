@@ -42,7 +42,7 @@ jobs:
 
       # Allow this step to continue on after the validation fails.
       - name: Test bad credentials with validation.
-        id: catch-failure
+        id: bad-credentials-with-failure
         uses: ./
         continue-on-error: true
         with:
@@ -50,11 +50,10 @@ jobs:
           client_id: foo
           client_secret_key: bar
 
-      - name: output status
-        run: echo ${{ steps.catch-failure.outcome }}  ${{ steps.catch-failure.conclusion }}
-
+      # If the previous step didn't fail before "continue-on-error" then this test should fail as
+      # the failure should have happened.
       - name: Validate previous step failure
-        if: steps.catch-failure.outcome != 'failure'
+        if: steps.bad-credentials-with-failure.outcome != 'failure'
         run: exit 1
 
       - name: Stop running hserver

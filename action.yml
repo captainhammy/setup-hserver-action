@@ -36,5 +36,5 @@ runs:
 
     - if: inputs.client_id != '' && inputs.client_secret_key != '' && inputs.skip_validation != '1'
       name: Check credentials if using login licensing
-      run: timeout 3 sesictrl login
+      run: timeout 4 sesictrl login > /dev/null
       shell: bash
