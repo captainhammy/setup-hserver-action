@@ -6,7 +6,7 @@ branding:
 
 inputs:
   server:
-    description: "The hserver server string(s)."
+    description: "The hserver host string(s)."
 
   client_id:
     description: "Optional SideFX Web API client_id value to use."
@@ -17,6 +17,11 @@ inputs:
   extra:
     description: "Optional extra command flags to pass to the hserver command."
 
+  skip_validation:
+    description: "Skip credential validation check when using login licensing."
+    required: false
+    default: "0"
+
 runs:
   using: "composite"
 
@@ -25,5 +30,11 @@ runs:
       run: echo server is empty && exit 1
       shell: bash
 
-    - run: hserver ${{ inputs.client_id != '' && format('--clientid {0}', inputs.client_id) || '' }} ${{ inputs.client_secret_key != '' && format('--clientsecret {0}', inputs.client_secret_key) || '' }} --host ${{ inputs.server }} ${{ inputs.extra || '' }}
+    - name: Setup hserver
+      run: hserver ${{ inputs.client_id != '' && format('--clientid {0}', inputs.client_id) || '' }} ${{ inputs.client_secret_key != '' && format('--clientsecret {0}', inputs.client_secret_key) || '' }} --host ${{ inputs.server }} ${{ inputs.extra || '' }}
+      shell: bash
+
+    - if: inputs.client_id != '' && inputs.client_secret_key != '' && inputs.skip_validation != '1'
+      name: Check credentials if using login licensing
+      run: timeout 3 sesictrl login > /dev/null
       shell: bash
